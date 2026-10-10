@@ -1,0 +1,14 @@
+import express from 'express';
+import cors from 'cors';
+import {router} from './routes.js';
+import {client} from './db.js';
+const app=express();
+app.use(express.json({limit:'32kb'}));
+app.use(cors({origin:process.env.FRONTEND_ORIGIN||'http://localhost:5173'}));
+const healthHandler=async(_req,res)=>{try{await client.execute('SELECT 1');res.json({status:'ok',database:'connected'});}catch(e){console.error('health:',e.message);res.status(503).json({status:'error'});}};
+app.get('/health',healthHandler);
+app.get('/api/health',healthHandler);
+app.use('/api/todos',router);
+app.use('/api',(_req,res)=>res.status(404).json({message:'API not found'}));
+app.use((err,_req,res,_next)=>{console.error(err);if(err.type==='entity.parse.failed')return res.status(400).json({message:'Invalid JSON'});res.status(500).json({message:'Internal server error'});});
+export default app;

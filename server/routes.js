@@ -1,0 +1,11 @@
+import {Router} from 'express';
+import {eq,desc} from 'drizzle-orm';
+import {db} from './db.js';
+import {todos} from './schema.js';
+export const router=Router();
+const validId=(raw)=>{const n=Number(raw);return Number.isSafeInteger(n)&&n>0?n:null;};
+router.get('/',async(_req,res)=>res.json(await db.select().from(todos).orderBy(desc(todos.id))));
+router.get('/:id',async(req,res)=>{const id=validId(req.params.id);if(!id)return res.status(400).json({message:'Invalid id'});const [row]=await db.select().from(todos).where(eq(todos.id,id));return row?res.json(row):res.status(404).json({message:'Todo not found'});});
+router.post('/',async(req,res)=>{const title=req.body?.title;if(typeof title!=='string'||!title.trim()||title.trim().length>200)return res.status(400).json({message:'Title is required (1–200 characters)'});const [row]=await db.insert(todos).values({title:title.trim(),completed:false}).returning();return res.status(201).json(row);});
+router.patch('/:id',async(req,res)=>{const id=validId(req.params.id);if(!id)return res.status(400).json({message:'Invalid id'});const changes={};if(Object.hasOwn(req.body||{},'title')){if(typeof req.body.title!=='string'||!req.body.title.trim()||req.body.title.trim().length>200)return res.status(400).json({message:'Invalid title'});changes.title=req.body.title.trim();}if(Object.hasOwn(req.body||{},'completed')){if(typeof req.body.completed!=='boolean')return res.status(400).json({message:'completed must be boolean'});changes.completed=req.body.completed;}if(!Object.keys(changes).length)return res.status(400).json({message:'No changes supplied'});const [row]=await db.update(todos).set(changes).where(eq(todos.id,id)).returning();return row?res.json(row):res.status(404).json({message:'Todo not found'});});
+router.delete('/:id',async(req,res)=>{const id=validId(req.params.id);if(!id)return res.status(400).json({message:'Invalid id'});const [row]=await db.delete(todos).where(eq(todos.id,id)).returning();return row?res.status(204).end():res.status(404).json({message:'Todo not found'});});

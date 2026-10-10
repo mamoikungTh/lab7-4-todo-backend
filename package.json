@@ -1,0 +1,21 @@
+{
+  "name": "lab-7-4-todo-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/local.js",
+    "dev": "node --watch server/local.js",
+    "db:init": "node scripts/init-db.js",
+    "check": "node --check server/app.js && node --check server/db.js && node --check server/routes.js && node --check server/schema.js && node --check api/index.js",
+    "test": "node --test tests/api.test.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "drizzle-orm": "^0.45.4",
+    "@libsql/client": "^0.15.15"
+  },
+  "devDependencies": {}
+}
